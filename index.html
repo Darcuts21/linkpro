@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Liens — carnet de projets</title>
+<style>
+:root{
+  --bg:#fff1e8; --panel:#fffaf6; --field:#ffffff; --ink:#3a2433; --muted:#8c6b74; --line:#f1d9cc;
+  --accent:#e8556d; --accent-ink:#ffffff; --amber:#f5a524; --danger:#c8353f;
+  --accent-soft:color-mix(in srgb,var(--accent) 17%,var(--panel));
+  --shadow:0 1px 2px rgba(60,30,30,.06),0 10px 28px -10px rgba(60,30,30,.22);
+  --r:18px; --rs:12px; --rb:999px; --rside:22px;
+  --pad:16px 20px 14px 26px; --gap:12px;
+  --font:ui-rounded,"SF Pro Rounded","Avenir Next","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+html{font-size:16px;scroll-padding-top:env(safe-area-inset-top,0px)}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);line-height:1.5;font-family:var(--font)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+
+.app{display:grid;grid-template-columns:280px 1fr;gap:20px;padding:16px;min-height:100vh}
+[data-side=right] .app{grid-template-columns:1fr 280px}
+[data-side=right] .side{order:2}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:var(--rside);box-shadow:var(--shadow);padding:22px 14px 16px;display:flex;flex-direction:column;gap:14px;position:sticky;top:16px;height:calc(100vh - 32px);overflow:auto}
+.side h1{font-size:1.5rem;font-weight:800;margin:0 10px 4px;letter-spacing:-.02em}
+.side nav{display:flex;flex-direction:column;gap:3px}
+
+.btn{border:1px solid var(--line);background:var(--field);padding:8px 16px;border-radius:var(--rb);cursor:pointer;font-size:.9rem;font-weight:600;transition:border-color .15s,background .15s}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.07)}
+label.btn{display:inline-block}
+
+.f{flex:1;display:flex;align-items:center;gap:8px;padding:9px 8px;background:none;border:0;text-align:left;cursor:pointer;border-radius:var(--rs);min-width:0}
+.f .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f .n{color:var(--muted);font-size:.78rem;font-weight:700;background:var(--bg);border-radius:var(--rb);padding:0 8px;min-width:24px;text-align:center;font-variant-numeric:tabular-nums}
+.frow{display:flex;align-items:center;border-radius:var(--rs);transition:background .15s}
+.frow:hover{background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
+.frow.on{background:var(--accent-soft)}
+.frow.on .name{font-weight:750}
+.frow.on .n{background:var(--panel)}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;flex:none}
+.dotbtn{background:none;border:0;padding:8px 2px 8px 10px;cursor:pointer;display:flex}
+.mini{background:none;border:0;color:var(--muted);font-size:.74rem;cursor:pointer;padding:4px 6px;opacity:0;border-radius:8px}
+.mini:hover{color:var(--ink);background:var(--panel)}
+.frow:hover .mini,.frow:focus-within .mini{opacity:1}
+@media (hover:none){.mini{opacity:1}}
+.ren{display:flex;gap:6px;padding:4px 0}
+.ren input,#folderForm input{flex:1;min-width:0;padding:8px 12px;border:1px solid var(--line);border-radius:var(--rs);background:var(--field)}
+#folderForm{display:flex;gap:6px}
+.data{margin-top:auto;display:flex;gap:6px;flex-wrap:wrap;padding-top:6px}
+
+main{padding:14px clamp(4px,3vw,40px) 40px;max-width:920px;width:100%}
+[data-view=grid] main{max-width:1180px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.top h2{margin:0;font-size:2rem;font-weight:800;letter-spacing:-.025em}
+.top h2 small{font-weight:700;color:var(--accent);background:var(--accent-soft);font-size:.8rem;margin-left:12px;padding:3px 12px;border-radius:var(--rb);letter-spacing:0;vertical-align:middle}
+#search{padding:10px 16px;border:1px solid var(--line);border-radius:var(--rb);background:var(--field);width:min(100%,300px)}
+
+.add{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.add .row{display:flex;gap:10px;flex-wrap:wrap}
+.add .row.end{justify-content:space-between;align-items:center}
+.add input,.add textarea,.add select,.edit input,.edit select,.note{padding:10px 14px;border:1px solid var(--line);border-radius:var(--rs);background:var(--field);width:100%}
+.add .row input{flex:1 1 220px;width:auto}
+.add select,.edit select{width:auto;max-width:100%;border-radius:var(--rb)}
+textarea{resize:vertical}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.8}
+
+#list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--gap)}
+[data-view=grid] #list{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));align-items:start}
+.link{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:var(--pad)}
+.link::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--c,var(--accent))}
+.head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.t{font-size:1.08rem;font-weight:750;color:var(--ink);text-decoration:none;overflow-wrap:anywhere;letter-spacing:-.01em}
+.t:hover{color:var(--accent)}
+.tag{font-size:.72rem;font-weight:700;border-radius:var(--rb);padding:1px 9px;background:color-mix(in srgb,var(--amber) 28%,transparent);color:var(--ink)}
+.fol{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted);font-weight:600}
+.u{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.78rem;color:var(--muted);overflow-wrap:anywhere;margin-top:2px}
+[data-url=hide] .u{display:none}
+.np{margin:12px 0 0;padding:10px 14px;border-radius:var(--rs);background:color-mix(in srgb,var(--amber) 18%,var(--panel));white-space:pre-wrap;overflow-wrap:anywhere;max-width:70ch;font-size:.95rem}
+.note{margin-top:12px;display:block}
+.acts{display:flex;gap:4px;flex-wrap:wrap;margin:10px -8px 0}
+.acts button{background:none;border:0;padding:4px 10px;border-radius:var(--rb);color:var(--muted);font-size:.84rem;font-weight:600;cursor:pointer}
+.acts button:hover{background:var(--accent-soft);color:var(--ink)}
+.acts .danger:hover{color:var(--danger)}
+.edit{display:flex;flex-direction:column;gap:10px}
+.edit .row{display:flex;gap:8px;flex-wrap:wrap}
+.edit .row input{flex:1 1 200px;width:auto}
+.empty{grid-column:1/-1;padding:40px 20px;text-align:center;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:var(--r)}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,12px);background:var(--ink);color:var(--bg);padding:10px 20px;border-radius:var(--rb);font-size:.9rem;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* paramètres */
+dialog{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);color:var(--ink);box-shadow:0 24px 60px -12px rgba(0,0,0,.4);padding:0;width:min(580px,calc(100vw - 24px));max-height:calc(100vh - 32px);font-family:var(--font)}
+dialog::backdrop{background:rgba(30,15,20,.5)}
+.set-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 6px}
+.set-head h2{margin:0;font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
+#setBody{padding:6px 22px 8px}
+.set-row,.set-block{padding:13px 0;border-bottom:1px solid var(--line)}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.set-label{font-weight:700;font-size:.92rem}
+.pres{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}
+.pre{display:flex;align-items:center;gap:8px;padding:10px 12px;border:2px solid var(--sw-line);border-radius:var(--rs);background:var(--sw-bg);color:var(--sw-ink);cursor:pointer;font-weight:650}
+.pre .dot{background:var(--sw-ac);width:14px;height:14px}
+.pre[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.seg{display:inline-flex;flex-wrap:wrap;gap:3px;padding:3px;background:var(--bg);border-radius:var(--rb)}
+.seg button{border:0;background:none;padding:6px 14px;border-radius:var(--rb);cursor:pointer;font-weight:600;color:var(--muted);font-size:.88rem}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-checked=true]{background:var(--accent);color:var(--accent-ink)}
+.acc{display:flex;align-items:center;gap:10px}
+input[type=color]{width:44px;height:36px;padding:2px;border:1px solid var(--line);border-radius:var(--rs);background:var(--field);cursor:pointer}
+input[type=range]{accent-color:var(--accent);width:150px}
+output{min-width:46px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600}
+.set-foot{display:flex;justify-content:space-between;gap:10px;padding:14px 22px 20px}
+
+@media (prefers-reduced-motion:reduce){#toast,.btn,.frow{transition:none}}
+@media (max-width:760px){
+  .app{grid-template-columns:1fr!important;padding:12px;gap:14px}
+  .side{position:static;height:auto;order:0!important}
+  .top h2{font-size:1.6rem}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <h1>Liens</h1>
+    <nav id="folders" aria-label="Dossiers"></nav>
+    <form id="folderForm" hidden>
+      <input id="fName" placeholder="Nom du dossier" aria-label="Nom du nouveau dossier" required>
+      <button class="btn primary">Créer</button>
+    </form>
+    <button id="newFolder" class="btn" type="button">Nouveau dossier</button>
+    <div class="data">
+      <button id="settingsBtn" class="btn" type="button">Paramètres</button>
+      <button id="exportBtn" class="btn" type="button">Exporter</button>
+      <label class="btn">Importer<input type="file" id="importFile" accept="application/json" hidden></label>
+    </div>
+  </aside>
+
+  <main>
+    <header class="top">
+      <h2 id="heading"></h2>
+      <input id="search" type="search" placeholder="Rechercher un lien ou une note ( / )" aria-label="Rechercher">
+    </header>
+
+    <form id="addForm" class="add">
+      <div class="row">
+        <input id="aUrl" required placeholder="URL ou localhost:3000" aria-label="URL" autocomplete="off">
+        <input id="aTitle" placeholder="Titre (facultatif)" aria-label="Titre" autocomplete="off">
+      </div>
+      <textarea id="aNote" rows="2" placeholder="Note perso (facultatif)" aria-label="Note"></textarea>
+      <div class="row end">
+        <select id="aFolder" aria-label="Dossier"></select>
+        <button class="btn primary">Ajouter le lien</button>
+      </div>
+    </form>
+
+    <ul id="list"></ul>
+  </main>
+</div>
+
+<dialog id="settings" aria-labelledby="setTitle">
+  <div class="set-head">
+    <h2 id="setTitle">Paramètres</h2>
+    <button type="button" class="btn" id="setClose">Fermer</button>
+  </div>
+  <div id="setBody"></div>
+  <div class="set-foot">
+    <button type="button" class="btn" id="setReset">Tout réinitialiser</button>
+    <button type="button" class="btn primary" id="setDone">Terminé</button>
+  </div>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const KEY = 'liens-projets-v1';
+const SKEY = 'liens-reglages-v1';
+const COLORS = ['#e8556d', '#f5a524', '#e0703a', '#c2417a', '#d9a21b', '#9b5de5'];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+/* ---------- réglages & thèmes ---------- */
+const PRESETS = {
+  peach:  { name: 'Pêche',
+    light: { bg:'#fff1e8', panel:'#fffaf6', field:'#ffffff', ink:'#3a2433', muted:'#8c6b74', line:'#f1d9cc', accent:'#e8556d', amber:'#f5a524' },
+    dark:  { bg:'#241a1f', panel:'#302229', field:'#3b2b33', ink:'#fdeee6', muted:'#c7a4ab', line:'#46333b', accent:'#ff7b8f', amber:'#f5a524' } },
+  ocean:  { name: 'Océan',
+    light: { bg:'#e8f3f6', panel:'#f7fbfc', field:'#ffffff', ink:'#14323d', muted:'#5b7f8b', line:'#cfe3e9', accent:'#1f8fb3', amber:'#f2b134' },
+    dark:  { bg:'#0f1e25', panel:'#16303a', field:'#1d3b47', ink:'#e3f4f8', muted:'#8fb6c2', line:'#25485a', accent:'#4cc3e6', amber:'#f2b134' } },
+  forest: { name: 'Forêt',
+    light: { bg:'#eef2e6', panel:'#fafcf6', field:'#ffffff', ink:'#1f2f22', muted:'#66796a', line:'#d6e0cb', accent:'#2f8f5b', amber:'#e6b422' },
+    dark:  { bg:'#142018', panel:'#1c2e22', field:'#243a2b', ink:'#e6f2e8', muted:'#97b49f', line:'#2d4a37', accent:'#5fd18a', amber:'#e6b422' } },
+  grape:  { name: 'Raisin',
+    light: { bg:'#f3ecf8', panel:'#fcf9fe', field:'#ffffff', ink:'#2b1f3a', muted:'#7a6a90', line:'#e2d6ee', accent:'#8a4fd6', amber:'#f0a93a' },
+    dark:  { bg:'#1d1528', panel:'#2a1f3a', field:'#352846', ink:'#f2e9fb', muted:'#b9a5d1', line:'#443358', accent:'#b98cff', amber:'#f0a93a' } },
+  slate:  { name: 'Ardoise',
+    light: { bg:'#eceef1', panel:'#fafbfc', field:'#ffffff', ink:'#1c2128', muted:'#69727d', line:'#d8dce1', accent:'#3b5bdb', amber:'#f0b429' },
+    dark:  { bg:'#14171c', panel:'#1d2229', field:'#262d36', ink:'#e8ebef', muted:'#98a2b0', line:'#2e353f', accent:'#7c93ff', amber:'#f0b429' } }
+};
+const FONTS = {
+  round: 'ui-rounded,"SF Pro Rounded","Avenir Next","Segoe UI",system-ui,sans-serif',
+  sans:  'system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
+  serif: '"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif',
+  mono:  'ui-monospace,"SF Mono",Menlo,Consolas,monospace'
+};
+const SHAPES = {
+  round:  { r:'18px', rs:'12px', rb:'999px', rside:'22px' },
+  soft:   { r:'12px', rs:'8px',  rb:'8px',   rside:'14px' },
+  square: { r:'4px',  rs:'3px',  rb:'3px',   rside:'4px' }
+};
+const DENSITY = {
+  comfort: { pad:'16px 20px 14px 26px', gap:'12px' },
+  compact: { pad:'9px 14px 7px 20px',   gap:'7px' }
+};
+const SEGS = [
+  ['mode', 'Mode', [['light','Clair'], ['dark','Sombre'], ['auto','Auto']]],
+  ['font', 'Police', [['round','Arrondie'], ['sans','Classique'], ['serif','Serif'], ['mono','Mono']]],
+  ['shape', 'Formes', [['round','Rondes'], ['soft','Douces'], ['square','Droites']]],
+  ['density', 'Densité', [['comfort','Aérée'], ['compact','Compacte']]],
+  ['view', 'Affichage des liens', [['list','Liste'], ['grid','Grille']]],
+  ['side', 'Barre latérale', [['left','Gauche'], ['right','Droite']]],
+  ['url', 'Adresses des liens', [['show','Visibles'], ['hide','Masquées']]]
+];
+const DEFAULTS = { preset:'peach', mode:'auto', accent:null, font:'round', shape:'round', density:'comfort', view:'list', url:'show', side:'left', size:100 };
+
+let cfg = loadCfg();
+function loadCfg() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SKEY));
+    if (s && typeof s === 'object') {
+      const c = { ...DEFAULTS, ...s };
+      if (!PRESETS[c.preset]) c.preset = 'peach';
+      if (c.accent && !/^#[0-9a-f]{6}$/i.test(c.accent)) c.accent = null;
+      c.size = Math.min(125, Math.max(90, +c.size || 100));
+      return c;
+    }
+  } catch (e) {}
+  return { ...DEFAULTS };
+}
+function saveCfg() { try { localStorage.setItem(SKEY, JSON.stringify(cfg)); } catch (e) {} }
+
+const mq = window.matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => cfg.mode === 'dark' || (cfg.mode === 'auto' && mq.matches);
+function inkOn(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const L = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  return L > 0.6 ? '#241219' : '#ffffff';
+}
+function applyCfg() {
+  const dark = isDark();
+  const P = PRESETS[cfg.preset];
+  const p = { ...(dark ? P.dark : P.light) };
+  if (cfg.accent) p.accent = cfg.accent;
+  const root = document.documentElement, st = root.style;
+  for (const k of ['bg', 'panel', 'field', 'ink', 'muted', 'line', 'accent', 'amber']) st.setProperty('--' + k, p[k]);
+  st.setProperty('--accent-ink', inkOn(p.accent));
+  st.setProperty('--danger', dark ? '#ff9a9a' : '#c8353f');
+  st.setProperty('--shadow', dark
+    ? '0 10px 28px -10px rgba(0,0,0,.55)'
+    : '0 1px 2px rgba(60,30,30,.06),0 10px 28px -10px rgba(60,30,30,.22)');
+  const sh = SHAPES[cfg.shape] || SHAPES.round;
+  st.setProperty('--r', sh.r); st.setProperty('--rs', sh.rs); st.setProperty('--rb', sh.rb); st.setProperty('--rside', sh.rside);
+  const de = DENSITY[cfg.density] || DENSITY.comfort;
+  st.setProperty('--pad', de.pad); st.setProperty('--gap', de.gap);
+  st.setProperty('--font', FONTS[cfg.font] || FONTS.round);
+  st.fontSize = (16 * cfg.size / 100) + 'px';
+  st.colorScheme = dark ? 'dark' : 'light';
+  root.dataset.view = cfg.view;
+  root.dataset.url = cfg.url;
+  root.dataset.side = cfg.side;
+}
+mq.addEventListener('change', () => { if (cfg.mode === 'auto') { applyCfg(); if ($('#settings').open) renderSettings(); } });
+
+function renderSettings() {
+  const dark = isDark();
+  const cur = dark ? PRESETS[cfg.preset].dark : PRESETS[cfg.preset].light;
+  let h = `<div class="set-block"><div class="set-label">Thème</div><div class="pres">`;
+  for (const [k, p] of Object.entries(PRESETS)) {
+    const c = dark ? p.dark : p.light;
+    h += `<button type="button" class="pre" data-preset="${k}" aria-pressed="${cfg.preset === k}" style="--sw-bg:${c.panel};--sw-ink:${c.ink};--sw-ac:${c.accent};--sw-line:${c.line}"><span class="dot"></span>${p.name}</button>`;
+  }
+  h += `</div></div>
+    <div class="set-row"><div class="set-label">Couleur d’accent</div>
+      <div class="acc"><input type="color" id="accent" value="${cfg.accent || cur.accent}" aria-label="Couleur d’accent">
+      <button type="button" class="btn" id="accReset">Couleur du thème</button></div></div>`;
+  for (const [k, label, choices] of SEGS) {
+    h += `<div class="set-row"><div class="set-label" id="l-${k}">${label}</div><div class="seg" role="radiogroup" aria-labelledby="l-${k}">`;
+    h += choices.map(([v, t]) => `<button type="button" role="radio" aria-checked="${cfg[k] === v}" data-k="${k}" data-v="${v}">${t}</button>`).join('');
+    h += `</div></div>`;
+  }
+  h += `<div class="set-row"><label class="set-label" for="size">Taille du texte</label>
+    <div class="acc"><input type="range" id="size" min="90" max="125" step="5" value="${cfg.size}"><output id="sizeOut">${cfg.size} %</output></div></div>`;
+  $('#setBody').innerHTML = h;
+}
+
+const dlg = $('#settings');
+$('#settingsBtn').addEventListener('click', () => { renderSettings(); dlg.showModal(); });
+$('#setClose').addEventListener('click', () => dlg.close());
+$('#setDone').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+$('#setReset').addEventListener('click', () => {
+  if (!confirm('Remettre tous les paramètres par défaut ?')) return;
+  cfg = { ...DEFAULTS };
+  saveCfg(); applyCfg(); renderSettings();
+});
+$('#setBody').addEventListener('click', e => {
+  const preset = e.target.closest('[data-preset]');
+  const seg = e.target.closest('[data-k]');
+  let focusSel = null;
+  if (preset) {
+    cfg.preset = preset.dataset.preset;
+    cfg.accent = null;
+    focusSel = `[data-preset="${cfg.preset}"]`;
+  } else if (seg) {
+    cfg[seg.dataset.k] = seg.dataset.v;
+    focusSel = `[data-k="${seg.dataset.k}"][data-v="${seg.dataset.v}"]`;
+  } else if (e.target.closest('#accReset')) {
+    cfg.accent = null;
+    focusSel = '#accReset';
+  } else return;
+  saveCfg(); applyCfg(); renderSettings();
+  if (focusSel) { const el = $('#setBody ' + focusSel); if (el) el.focus(); }
+});
+$('#setBody').addEventListener('input', e => {
+  if (e.target.id === 'accent') { cfg.accent = e.target.value; saveCfg(); applyCfg(); }
+  if (e.target.id === 'size') {
+    cfg.size = +e.target.value;
+    $('#sizeOut').textContent = cfg.size + ' %';
+    saveCfg(); applyCfg();
+  }
+});
+
+/* ---------- données ---------- */
+let state = load();
+const ui = { folder: 'all', q: '', editing: null, noteOpen: new Set(), renaming: null, focusNote: null };
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && Array.isArray(s.folders) && Array.isArray(s.links) && s.folders.length) return s;
+  } catch (e) {}
+  return { folders: [{ id: uid(), name: 'Projets locaux', color: COLORS[0] }], links: [] };
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch (e) { toast('Sauvegarde impossible dans ce navigateur'); }
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+const isLocal = u => /^(localhost|127\.|0\.0\.0\.0|192\.168\.|\[::1\])/i.test(u);
+function normUrl(raw) {
+  let u = raw.trim();
+  if (!u || /^(javascript|data|vbscript):/i.test(u)) return null;
+  if (/^:\d+/.test(u)) u = 'localhost' + u;
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(u)) u = (isLocal(u) ? 'http://' : 'https://') + u;
+  try { new URL(u); return u; } catch (e) { return null; }
+}
+function autoTitle(u) {
+  const x = new URL(u);
+  return x.host + (x.pathname !== '/' ? x.pathname : '');
+}
+
+/* ---------- rendu ---------- */
+function render() { renderFolders(); renderSelect(); renderList(); }
+
+function renderFolders() {
+  const count = id => state.links.filter(l => l.folderId === id).length;
+  let h = `<div class="frow ${ui.folder === 'all' ? 'on' : ''}">
+    <button class="dotbtn" tabindex="-1" aria-hidden="true"><span class="dot" style="background:var(--muted)"></span></button>
+    <button class="f" data-act="pick" data-id="all"><span class="name">Tous les liens</span><span class="n">${state.links.length}</span></button></div>`;
+  for (const f of state.folders) {
+    if (ui.renaming === f.id) {
+      h += `<form class="ren" data-id="${f.id}"><input value="${esc(f.name)}" aria-label="Nom du dossier" required><button class="btn">OK</button></form>`;
+      continue;
+    }
+    h += `<div class="frow ${ui.folder === f.id ? 'on' : ''}">
+      <button class="dotbtn" data-act="color" data-id="${f.id}" title="Changer la couleur" aria-label="Changer la couleur de ${esc(f.name)}"><span class="dot" style="background:${f.color}"></span></button>
+      <button class="f" data-act="pick" data-id="${f.id}"><span class="name">${esc(f.name)}</span><span class="n">${count(f.id)}</span></button>
+      <button class="mini" data-act="rename" data-id="${f.id}">Renommer</button>
+      <button class="mini" data-act="delfolder" data-id="${f.id}">Suppr.</button></div>`;
+  }
+  $('#folders').innerHTML = h;
+  const r = document.querySelector('.ren input');
+  if (r) { r.focus(); r.select(); }
+}
+
+function renderSelect() {
+  const sel = $('#aFolder');
+  const cur = ui.folder !== 'all' ? ui.folder : (sel.value || state.folders[0].id);
+  sel.innerHTML = state.folders.map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
+  sel.value = state.folders.some(f => f.id === cur) ? cur : state.folders[0].id;
+}
+
+function visibleLinks() {
+  const q = ui.q.trim().toLowerCase();
+  return state.links
+    .filter(l => (ui.folder === 'all' || l.folderId === ui.folder) &&
+      (!q || (l.title + ' ' + l.url + ' ' + l.note).toLowerCase().includes(q)))
+    .sort((a, b) => b.createdAt - a.createdAt);
+}
+
+function folderOptions(sel) {
+  return state.folders.map(f => `<option value="${f.id}" ${f.id === sel ? 'selected' : ''}>${esc(f.name)}</option>`).join('');
+}
+
+function editHTML(l) {
+  const ef = state.folders.find(x => x.id === l.folderId);
+  return `<li class="link" data-id="${l.id}" style="--c:${ef ? ef.color : 'var(--accent)'}"><form class="edit">
+    <div class="row"><input name="ttl" value="${esc(l.title)}" placeholder="Titre" aria-label="Titre"><input name="href" value="${esc(l.url)}" required placeholder="URL" aria-label="URL"></div>
+    <div class="row"><select name="fid" aria-label="Dossier">${folderOptions(l.folderId)}</select>
+    <button class="btn primary">Enregistrer</button><button type="button" class="btn" data-act="cancel">Annuler</button></div>
+  </form></li>`;
+}
+
+function linkHTML(l) {
+  if (ui.editing === l.id) return editHTML(l);
+  const f = state.folders.find(x => x.id === l.folderId);
+  const open = ui.noteOpen.has(l.id);
+  const local = /^https?:\/\/(localhost|127\.|0\.0\.0\.0|192\.168\.|\[::1\])/i.test(l.url);
+  const noteLabel = open ? 'Fermer la note' : l.note ? 'Modifier la note' : 'Ajouter une note';
+  return `<li class="link" data-id="${l.id}" style="--c:${f ? f.color : 'var(--accent)'}">
+    <div class="head">
+      <a class="t" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.title)}</a>
+      ${local ? '<span class="tag">local</span>' : ''}
+      ${ui.folder === 'all' && f ? `<span class="fol"><span class="dot" style="background:${f.color}"></span>${esc(f.name)}</span>` : ''}
+    </div>
+    <div class="u">${esc(l.url)}</div>
+    ${open
+      ? `<textarea class="note" rows="3" data-note="${l.id}" placeholder="Écris ta note ici…" aria-label="Note">${esc(l.note)}</textarea>`
+      : l.note ? `<p class="np">${esc(l.note)}</p>` : ''}
+    <div class="acts">
+      <button data-act="note">${noteLabel}</button>
+      <button data-act="edit">Modifier</button>
+      <button data-act="copy">Copier l’URL</button>
+      <button data-act="del" class="danger">Supprimer</button>
+    </div></li>`;
+}
+
+function renderList() {
+  const f = state.folders.find(x => x.id === ui.folder);
+  const items = visibleLinks();
+  $('#heading').innerHTML = `${esc(f ? f.name : 'Tous les liens')}<small>${items.length} lien${items.length > 1 ? 's' : ''}</small>`;
+  $('#list').innerHTML = items.length
+    ? items.map(linkHTML).join('')
+    : `<li class="empty">${ui.q.trim()
+        ? `Aucun résultat pour « ${esc(ui.q.trim())} ».`
+        : 'Aucun lien ici. Colle une URL ci-dessus — localhost:3000 fonctionne.'}</li>`;
+  if (ui.focusNote) {
+    const t = document.querySelector(`[data-note="${ui.focusNote}"]`);
+    if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
+    ui.focusNote = null;
+  }
+}
+
+/* ---------- dossiers ---------- */
+$('#folders').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const id = b.dataset.id;
+  const f = state.folders.find(x => x.id === id);
+  switch (b.dataset.act) {
+    case 'pick': ui.folder = id; break;
+    case 'color': f.color = COLORS[(COLORS.indexOf(f.color) + 1) % COLORS.length]; save(); break;
+    case 'rename': ui.renaming = id; break;
+    case 'delfolder': {
+      if (state.folders.length === 1) { toast('Il faut garder au moins un dossier'); return; }
+      const n = state.links.filter(l => l.folderId === id).length;
+      if (!confirm(`Supprimer « ${f.name} » et ses ${n} lien${n > 1 ? 's' : ''} ?`)) return;
+      state.folders = state.folders.filter(x => x.id !== id);
+      state.links = state.links.filter(l => l.folderId !== id);
+      if (ui.folder === id) ui.folder = 'all';
+      save();
+      break;
+    }
+  }
+  render();
+});
+$('#folders').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = state.folders.find(x => x.id === e.target.dataset.id);
+  const v = e.target.querySelector('input').value.trim();
+  if (f && v) { f.name = v; save(); }
+  ui.renaming = null;
+  render();
+});
+$('#folders').addEventListener('keydown', e => {
+  if (e.key === 'Escape' && ui.renaming) { ui.renaming = null; render(); }
+});
+
+$('#newFolder').addEventListener('click', () => {
+  $('#folderForm').hidden = false;
+  $('#newFolder').hidden = true;
+  $('#fName').focus();
+});
+$('#folderForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = $('#fName').value.trim();
+  if (!v) return;
+  const f = { id: uid(), name: v, color: COLORS[state.folders.length % COLORS.length] };
+  state.folders.push(f);
+  ui.folder = f.id;
+  save();
+  $('#fName').value = '';
+  $('#folderForm').hidden = true;
+  $('#newFolder').hidden = false;
+  render();
+});
+$('#folderForm').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { $('#folderForm').hidden = true; $('#newFolder').hidden = false; }
+});
+
+/* ---------- liens ---------- */
+$('#addForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const url = normUrl($('#aUrl').value);
+  if (!url) { toast('URL invalide'); return; }
+  const folderId = $('#aFolder').value;
+  state.links.push({
+    id: uid(),
+    folderId,
+    title: $('#aTitle').value.trim() || autoTitle(url),
+    url,
+    note: $('#aNote').value.trim(),
+    createdAt: Date.now()
+  });
+  save();
+  e.target.reset();
+  render();
+  $('#aFolder').value = folderId;
+  toast('Lien ajouté');
+  $('#aUrl').focus();
+});
+
+$('#list').addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const li = b.closest('[data-id]');
+  const id = li.dataset.id;
+  const l = state.links.find(x => x.id === id);
+  switch (b.dataset.act) {
+    case 'note':
+      if (ui.noteOpen.has(id)) ui.noteOpen.delete(id);
+      else { ui.noteOpen.add(id); ui.focusNote = id; }
+      break;
+    case 'edit': ui.editing = id; break;
+    case 'cancel': ui.editing = null; break;
+    case 'copy':
+      try { await navigator.clipboard.writeText(l.url); toast('URL copiée'); }
+      catch (err) { toast('Copie impossible'); }
+      return;
+    case 'del':
+      if (!confirm('Supprimer ce lien ?')) return;
+      state.links = state.links.filter(x => x !== l);
+      ui.noteOpen.delete(id);
+      save();
+      break;
+  }
+  renderList();
+  renderFolders();
+});
+
+$('#list').addEventListener('submit', e => {
+  e.preventDefault();
+  const form = e.target;
+  const l = state.links.find(x => x.id === form.closest('[data-id]').dataset.id);
+  const url = normUrl(form.elements.href.value);
+  if (!url) { toast('URL invalide'); return; }
+  l.url = url;
+  l.title = form.elements.ttl.value.trim() || autoTitle(url);
+  l.folderId = form.elements.fid.value;
+  ui.editing = null;
+  save();
+  render();
+});
+
+/* sauvegarde automatique des notes à la frappe */
+$('#list').addEventListener('input', e => {
+  const id = e.target.dataset.note;
+  if (!id) return;
+  const l = state.links.find(x => x.id === id);
+  if (l) { l.note = e.target.value; save(); }
+});
+
+$('#search').addEventListener('input', e => { ui.q = e.target.value; renderList(); });
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && !dlg.open) {
+    e.preventDefault();
+    $('#search').focus();
+  }
+});
+
+/* ---------- sauvegarde fichier ---------- */
+let downloadsCap = null;
+if (window.claude && claude.use) claude.use('downloads').then(d => { downloadsCap = d; }).catch(() => {});
+$('#exportBtn').addEventListener('click', async () => {
+  const name = `liens-${new Date().toISOString().slice(0, 10)}.json`;
+  const json = JSON.stringify(state, null, 2);
+  if (downloadsCap) {
+    try { await downloadsCap.save({ filename: name, data: json }); toast('Export prêt'); }
+    catch (err) { if (!err || err.code !== 'declined') toast('Export impossible'); }
+    return;
+  }
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+$('#importFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const s = JSON.parse(await file.text());
+    if (!Array.isArray(s.folders) || !Array.isArray(s.links) || !s.folders.length) throw 0;
+    if (!confirm('Remplacer toutes les données actuelles par ce fichier ?')) return;
+    state = s;
+    ui.folder = 'all';
+    save();
+    render();
+    toast('Import terminé');
+  } catch (err) { toast('Fichier invalide'); }
+});
+
+applyCfg();
+render();
+</script>
+</body>
+</html>
